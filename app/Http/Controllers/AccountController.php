@@ -8,27 +8,38 @@ use App\Models\Account;
 
 class AccountController extends Controller
 {
-    private $account;
+    private $accounts;
 
-    public function __construct()
-    {
-        $this->account = new Account();
+    public function reset(Request $request) {
+        $request->session()->flush();
+
+        return response()->json([
+            'message' => 'Success'
+        ]);
     }
 
     public function balance(Request $request)
     {
         return response()->json([
-            'test' => $request->session()->get('teste')
+            'test' => $request->session()->get($request->input('account_id'))
         ]);
     }
 
     public function event(Request $request)
     {
-        $request->session()->put('teste', $request->input('teste'));
-        $this->account->setAmount($request->input('teste'));
+        $account = new Account();
+
+        switch($request->input('type')) {
+            case 'deposit':
+                $account->makeDeposit($request);
+                $response = [
+                    'destination' => $account->getAccountInfo()
+                ];
+            break;
+        }
 
         return response()->json([
-            'test1' => $this->account->getAmount()
+            $request->session()
         ]);
     }
 }
