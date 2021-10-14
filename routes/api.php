@@ -14,6 +14,7 @@ use App\Http\Controllers\AccountController;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-
-Route::get('/balance', [AccountController::class, 'balance']);
-Route::post('/event', [AccountController::class, 'event']);
+Route::group(['middleware' => ['web']], function () {
+    Route::get('/balance', [AccountController::class, 'balance']);
+    Route::post('/event', [AccountController::class, 'event']);
+});
