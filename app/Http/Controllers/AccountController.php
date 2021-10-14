@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Account;
+use App\Exceptions\AccountException;
 
 
 class AccountController extends Controller
@@ -20,10 +21,13 @@ class AccountController extends Controller
 
     public function balance(Request $request)
     {
-        $accountId = 'account_'.$request->input('account_id');
-        return response()->json([
-            'test' => $request->session()->get($accountId)
-        ]);
+        $amount = $request->session()->get('account_'.$request->input('account_id'));
+
+        if (!$amount) {
+            throw new AccountException();
+        }
+
+        return response()->json($amount);
     }
 
     public function event(Request $request)
@@ -32,13 +36,19 @@ class AccountController extends Controller
 
         switch($request->input('type')) {
             case 'deposit':
-                $account->makeDeposit($request);
+                $account->makeDeposit();
                 $response = [
                     'destination' => $account->getAccountInfo()
                 ];
-            break;
+                break;
+            case 'withdraw':
+                $account->makeWithdraw();
+                $response = [
+                    'origin' => $account->getAccountInfo()
+                ];
+                break;
         }
 
-        return response()->json($response);
+        return response()->json($response, 201);
     }
 }
