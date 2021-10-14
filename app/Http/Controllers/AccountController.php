@@ -20,8 +20,9 @@ class AccountController extends Controller
 
     public function balance(Request $request)
     {
+        $accountId = 'account_'.$request->input('account_id');
         return response()->json([
-            'test' => $request->session()->get($request->input('account_id'))
+            'test' => $request->session()->get($accountId)
         ]);
     }
 
@@ -38,8 +39,6 @@ class AccountController extends Controller
             break;
         }
 
-        return response()->json([
-            $request->session()
-        ]);
+        return response()->json($response);
     }
 }

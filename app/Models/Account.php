@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Account extends Model
 {
     private $id;
-    private $accountAmount;
+    private $accountAmount = 0;
 
     public function getAmount()
     {
@@ -32,14 +32,13 @@ class Account extends Model
         $this->id = $request->input('destination');
         $this->accountAmount = $request->input('amount');
 
-        $account = $request->session()->get($this->id);
+        $amount = $request->session()->get("account_$this->id");
 
-        if (!$account) {
-            $request->session()->push($this->id, $this->accountAmount);
+        if (!$amount) {
+            $request->session()->put("account_$this->id", $this->accountAmount);
         } else {
-            $amount = $account[$this->id] + $this->accountAmount;
-            $accounts->put($this->id, $amount);
+            $this->accountAmount += $amount;
+            $request->session()->put("account_$this->id", $this->accountAmount);
         }
-
     }
 }
