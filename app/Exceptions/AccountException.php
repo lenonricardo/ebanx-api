@@ -8,8 +8,6 @@ class AccountException extends Exception
 {
     public function render()
     {
-        return response()->json([
-            'erro' => 'Account not found'
-        ], 404);
+        return response()->json(0, 404);
     }
 }
