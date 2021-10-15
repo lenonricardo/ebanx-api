@@ -7,11 +7,8 @@ use App\Models\Account;
 use App\Exceptions\AccountException;
 use Illuminate\Support\Facades\Cache;
 
-
 class AccountController extends Controller
 {
-    private $accounts;
-
     public function reset(Request $request) {
         Cache::flush();
 
@@ -20,13 +17,14 @@ class AccountController extends Controller
 
     public function balance(Request $request)
     {
-        $amount = Cache::get('account_'.$request->input('account_id'));
+        $account = new Account();
+        $data = $account->getAccountData($request->input('account_id'));
 
-        if (!$amount) {
+        if (is_null($data)) {
             throw new AccountException();
         }
 
-        return response()->json(intVal($amount));
+        return response()->json(intVal($data));
     }
 
     public function event(Request $request)

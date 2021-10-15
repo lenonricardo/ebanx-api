@@ -9,23 +9,46 @@ use Illuminate\Support\Facades\Cache;
 class Account extends Model
 {
     private $id;
-    private $origin;
-    private $accountAmount = 0;
+    private $accountAmount;
     private $request;
 
     public function __construct()
     {
         $this->request = request();
+        $this->accountAmount = 0;
     }
 
-    public function getAmount()
+    public function makeDeposit()
     {
-        return $this->accountAmount;
+        $this->id = $this->request->input('destination');
+        $this->accountAmount += $this->request->input('amount') + $this->getAccountData($this->id);
+
+        $this->updateData();
     }
 
-    public function getId()
+    public function makeWithdraw()
     {
-        return $this->id;
+        $this->id = $this->request->input('origin');
+        $originData = $this->getAccountData($this->id);
+
+        if (is_null($originData)) {
+            throw new AccountException();
+        }
+
+        $this->accountAmount = $originData - $this->request->input('amount');
+        $this->updateData();
+    }
+
+    public function makeTransfer()
+    {
+        $originData = $this->getAccountData($this->request->input('origin'));
+
+        if (is_null($originData)) {
+            throw new AccountException();
+        }
+
+        $this->makeDeposit();
+        $this->makeWithDraw();
     }
 
     public function getAccountInfo()
@@ -43,7 +66,6 @@ class Account extends Model
                 "id" => $this->request->input('origin'),
                 "balance" => intVal($this->getAccountData($this->request->input('origin')))
             ],
-
             "destination" => [
                 "id" => $this->request->input('destination'),
                 "balance" => intVal($this->getAccountData($this->request->input('destination')))
@@ -51,53 +73,13 @@ class Account extends Model
         ];
     }
 
-    public function makeDeposit()
+    public function getAccountData($id)
     {
-        $this->id = $this->request->input('destination');
-        $this->accountAmount = $this->request->input('amount');
-
-        $amount = $this->getAccountData($this->id);
-
-        if ($amount) {
-            $this->accountAmount += $amount;
-        }
-
-        $this->updateData();
-    }
-
-    public function makeWithdraw()
-    {
-        $this->id = $this->request->input('origin');
-
-        $amount = $this->getAccountData($this->id);
-
-        if (!$amount) {
-            throw new AccountException();
-        }
-
-        $this->accountAmount = $amount - $this->request->input('amount');
-        $this->updateData();
-    }
-
-    public function makeTransfer()
-    {
-        $origin = $this->getAccountData($this->request->input('origin'));
-
-        if (!$origin) {
-            throw new AccountException();
-        }
-
-        $this->makeDeposit();
-        $this->makeWithDraw();
+        return Cache::get("account_$id", null);
     }
 
     private function updateData()
     {
         Cache::store('redis')->put("account_$this->id",  $this->accountAmount);
-    }
-
-    private function getAccountData($id)
-    {
-        return Cache::get("account_$id");
     }
 }
