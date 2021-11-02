@@ -24,7 +24,7 @@ class AccountController extends Controller
             throw new AccountException();
         }
 
-        return response()->json(intVal($data));
+        return intVal($data);
     }
 
     public function event(Request $request)
