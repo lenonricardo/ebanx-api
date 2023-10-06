@@ -9,10 +9,12 @@ use Illuminate\Support\Facades\Cache;
 
 class AccountController extends Controller
 {
-    public function reset(Request $request) {
+    public const RESET_RESPONSE_OK = 'OK';
+
+    public function reset() {
         Cache::flush();
 
-        return 'OK';
+        return self::RESET_RESPONSE_OK;
     }
 
     public function balance(Request $request)
