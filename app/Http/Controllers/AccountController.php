@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Account;
 use App\Exceptions\AccountException;
+use App\Services\Event\Resolver as EventResolver;
 use Illuminate\Support\Facades\Cache;
+
 
 class AccountController extends Controller
 {
@@ -20,37 +22,18 @@ class AccountController extends Controller
     public function balance(Request $request)
     {
         $account = new Account();
-        $data = $account->getAccountData($request->input('account_id'));
+        $amount = $account->getCurrentAmount($request->input('account_id'));
 
-        if (is_null($data)) {
+        if (is_null($amount)) {
             throw new AccountException();
         }
 
-        return intVal($data);
+        return intVal($amount);
     }
 
     public function event(Request $request)
     {
-        $account = new Account();
-
-        switch($request->input('type')) {
-            case 'deposit':
-                $account->makeDeposit();
-                $response = [
-                    'destination' => $account->getAccountInfo()
-                ];
-                break;
-            case 'withdraw':
-                $account->makeWithdraw();
-                $response = [
-                    'origin' => $account->getAccountInfo()
-                ];
-                break;
-            case 'transfer':
-                $account->makeTransfer();
-                $response = $account->getTransferInfo();
-                break;
-        }
+        $response = EventResolver::resolve()->event($request->all());
 
         return response()->json($response, 201);
     }

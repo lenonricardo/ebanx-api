@@ -11,40 +11,40 @@ class Account extends Model
     private $id;
     private $accountAmount;
 
-    public function makeDeposit()
+    public function makeDeposit(array $params): void
     {
-        $this->id = request()->input('destination');
-        $this->accountAmount = request()->input('amount') + $this->getAccountData($this->id);
+        $this->id = $params['destination'];
+        $this->accountAmount = $params['amount'] + $this->getCurrentAmount($this->id);
 
-        $this->updateData();
+        $this->updateAmount();
     }
 
-    public function makeWithdraw()
+    public function makeWithdraw(array $params): void
     {
-        $this->id = request()->input('origin');
-        $originData = $this->getAccountData($this->id);
+        $this->id = $params['origin'];
+        $originData = $this->getCurrentAmount($this->id);
 
         if (is_null($originData)) {
             throw new AccountException();
         }
 
-        $this->accountAmount = $originData - request()->input('amount');
-        $this->updateData();
+        $this->accountAmount = $originData - $params['amount'];
+        $this->updateAmount();
     }
 
-    public function makeTransfer()
+    public function makeTransfer(array $params): void
     {
-        $originData = $this->getAccountData(request()->input('origin'));
+        $originData = $this->getCurrentAmount($params['origin']);
 
         if (is_null($originData)) {
             throw new AccountException();
         }
 
-        $this->makeDeposit();
-        $this->makeWithDraw();
+        $this->makeDeposit($params);
+        $this->makeWithDraw($params);
     }
 
-    public function getAccountInfo()
+    public function getAccountInfo(): array
     {
         return [
             'id' => $this->id,
@@ -52,26 +52,12 @@ class Account extends Model
         ];
     }
 
-    public function getTransferInfo()
-    {
-        return [
-            "origin" => [
-                "id" => request()->input('origin'),
-                "balance" => intVal($this->getAccountData(request()->input('origin')))
-            ],
-            "destination" => [
-                "id" => request()->input('destination'),
-                "balance" => intVal($this->getAccountData(request()->input('destination')))
-            ]
-        ];
-    }
-
-    public function getAccountData($id)
+    public function getCurrentAmount($id): int|null
     {
         return Cache::get("account_$id", null);
     }
 
-    private function updateData()
+    private function updateAmount(): void
     {
         Cache::put("account_$this->id",  $this->accountAmount);
     }
